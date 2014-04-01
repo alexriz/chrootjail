@@ -2,7 +2,7 @@
 #
 PRODUCTNAME="ChrootJail"
 VERSION="1.0.0"
-RELEASE="14 Feb 2014"
+RELEASE="01 Apr 2014"
 COPYRIGHT="(c) Copyright by Alex Yegerev (alexriz)"
 #
 #####################################################################
@@ -48,6 +48,10 @@ error(){
 			echo "  Error[$ERR_CODE]: Mounting error."
 			exit $ERR_CODE
 			;;
+		6 ) 
+			echo "  Error[$ERR_CODE]: Abort!."
+			exit $ERR_CODE
+			;;
 		* ) 
 			echo "  Error[$ERR_CODE]: Unknown error."
 			exit $ERR_CODE
@@ -56,19 +60,18 @@ error(){
 }
 
 umount_tmpdir(){
-	echo "Unmounting temp directory..."
-	if umount $TMPDIR;
+	if umount $TMPDIR > /dev/null 2>&1;
 		then error 0;
 		else error 5
 	fi
 }
 
-rm_tmpdir(){
-	echo "Removing temp directory..."
-	if rm -r $TMPDIR;
-		then error 0;
-		else error "Fail"
-	fi
+cleaner(){
+	echo "Cleaning..."
+	echo "Unmounting temp directory..."
+	umount_tmpdir
+	echo "Removing $TMPDIR directory..."
+	rm -r $TMPDIR > /dev/null 2>&1
 }
 
 # Print help guide
@@ -113,128 +116,118 @@ fi
 PKG="bash filesystem util-linux openssh"
 
 # Parse arguments
-declare -A argTree
-arg_state="def"
-for arg in "$@"; do
-	if echo $arg | grep -e "^-\{1,2\}[a-zA-Z0-9]" &> /dev/null ;
-		then 
-			case $arg in
-				-a )
-					arg_state="-a"
-					;;
-				--add )
-					arg_state="-a"
-					;;
-				-r )
-					arg_state="-r"
-					;;
-				--remove )
-					arg_state="-r"
-					;;
-				-m )
-					arg_state="-m"
-					;;
-				--mod )
-					arg_state="-m"
-					;;
-				-d )
-					arg_state="-d"
-					;;
-				--dir )
-					arg_state="-d"
-					;;
-				-g )
-					arg_state="-g"
-					;;
-				--group )
-					arg_state="-g"
-					;;
-				-j )
-					arg_state="-j"
-					;;
-				--jail )
-					arg_state="-j"
-					;;
-				-S )
-					arg_state="-S"
-					;;
-				* )
-					ERR=4
-					ERR_ARG=$arg
-					break
-					;;
-			esac;
-		else 
-			case $arg_state in
-				def )
-					argTree[$arg_state]="${argTree[$arg_state]} $arg"
-					;;
-				-a )
-					argTree[$arg_state]=$arg
-					;;
-				-r )
-					argTree[$arg_state]=$arg
-					;;
-				-m )
-					argTree[$arg_state]=$arg
-					;;
-				-d )
-					argTree[$arg_state]=$arg
-					;;
-				-g )
-					argTree[$arg_state]=$arg
-					;;
-				-j )
-					argTree[$arg_state]=$arg
-					;;
-				-S )
-					argTree[$arg_state]="${argTree[$arg_state]} $arg"
-					;;
-				* )
-					ERR="Fail"
-					ERR_ARG=$arg_state
-					break
-					;;
-			esac;
-	fi
+while getopts ":u:j:g:s:d:" opt; do
+	case "${opt}" in
+		u )
+			u=${OPTARG}
+			;;
+		j )
+			j=${OPTARG}
+			;;
+		g )
+			g=${OPTARG}
+			;;
+		s )
+			s=${OPTARG}
+			;;
+		d )
+			d=${OPTARG}
+			;;
+		* )
+			error 4 "-${opt}"
+			;;
+	esac
 done
-if [[ $ERR ]]; then
-	error $ERR $ERR_ARG
+
+# pacstrap pkgs
+APPS="$PKG ${s}"
+
+# Get account settings to create
+if [[ -n ${u} ]] ;
+	then USERNAME=${u};
+	else error 4 user
 fi
-echo "======================"
-for k in ${!argTree[@]}; do
-	echo "  $k: ${argTree[$k]}";
-done
-echo "======================"
+if [[ -n ${j} ]] ;
+	then JAIL=${j};
+	else error 4 jail path
+fi
+if [[ -n ${g} ]] ;
+	then USERGROUP=${g};
+	else USERGROUP="jail"
+fi
+if [[ -n ${g} ]] ;
+	then HOMEDIR=${d};
+	else HOMEDIR="/home/${u}"
+fi
+
+echo "+------+-----------------------------------------------+"
+echo "user:   $USERNAME"
+echo "jail:   $JAIL"
+echo "group:  $USERGROUP"
+echo "pkg:    $APPS"
+echo "home:   $HOMEDIR"
+echo "+------+-----------------------------------------------+"
+
+read -p "Continue? [Y/n] " CONTINUE
+if [[ -n $CONTINUE && $CONTINUE != "y" ]]; then
+	error 6
+fi
 
 # Make temp dir
 TMPDIR=~/mnt-$RANDOM
 echo "Making temp directory $TMPDIR..."
-if mkdir $TMPDIR;
-	then echo "  OK";
-	else exit 3
+if mkdir $TMPDIR > /dev/null 2>&1;
+	then error 0;
+	else error 3 $TMPDIR
 fi
 
 # Make jail dir
-JAIL=/home/webdev/jail
 echo "Making jail directory $JAIL..."
-if mkdir $JAIL;
-	then echo "  OK";
-	else echo "  Fail"
-		rm_tmpdir
-		exit 3
+if mkdir $JAIL > /dev/null 2>&1 ;
+	then error 0;
+	else rm -r $TMPDIR
+		error 3 $JAIL
 fi
 
 # Mount jail to tmpdir
 echo "Mounting jail to tmpdir..."
-if mount -o bind $JAIL $TMPDIR;
-	then echo "  OK";
-	else echo "  Fail"
+if mount -o bind $JAIL $TMPDIR > /dev/null 2>&1;
+	then error 0;
+	else rm -r $TMPDIR > /dev/null 2>&1
+		rm -r $JAIL > /dev/null 2>&1
+		error 5
 fi
 
+# Creation environment
+pacstrap $TMPDIR $APPS
+
+# Creating necessary devices
+[ -r $JAIL/dev/urandom ] || mknod $JAIL/dev/urandom c 1 9
+[ -r $JAIL/dev/null ]    || mknod -m 666 $JAIL/dev/null    c 1 3
+[ -r $JAIL/dev/zero ]    || mknod -m 666 $JAIL/dev/zero    c 1 5
+[ -r $JAIL/dev/tty ]     || mknod -m 666 $JAIL/dev/tty     c 5 0 
+
+# Creating user
+useradd -m -d $HOMEDIR -g $USERGROUP -s /bin/bash $USERNAME
+
+# Set password for chroot user
+passwd $USERNAME
+
+# Add users to $JAIL/etc/passwd
+#
+# check if file exists (ie we are not called for the first time)
+# if yes skip root's entry and do not overwrite the file
+grep /etc/passwd -e "^root" > $JAIL/etc/passwd
+grep /etc/group -e "^root" > $JAIL/etc/group
+grep /etc/shadow -e "^root" > $JAIL/etc/shadow
+grep /etc/passwd -e "^$USERNAME:" >> $JAIL/etc/passwd
+grep /etc/group -e "^$USERNAME:" >> $JAIL/etc/group
+grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
+
+# Copy User home dir to chroot
+cp -a $HOMEDIR $JAIL/home/
+
 # Cleaning...
-echo "Cleaning..."
-umount_tmpdir
-rm_tmpdir
+cleaner
 
 exit
