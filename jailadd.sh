@@ -155,7 +155,7 @@ if [[ -n ${g} ]] ;
 	then USERGROUP=${g};
 	else USERGROUP="jail"
 fi
-if [[ -n ${g} ]] ;
+if [[ -n ${d} ]] ;
 	then HOMEDIR=${d};
 	else HOMEDIR="/home/${u}"
 fi
