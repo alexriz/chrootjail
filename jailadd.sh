@@ -10,6 +10,11 @@ COPYRIGHT="(c) Copyright by Alex Yegerev (alexriz)"
 # Functions
 print_help(){
 	echo "  Usage: $0 [OPTION]"
+	echo "  -u    Set user name"
+	echo "  -j    Set jail directory"
+	echo "  -g    Set user group (def.: jail)"
+	echo "  -s    Set additional package"
+	echo "  -d    Set home directory"
 	echo "  --help      display this help and exit"
 	echo "  --version   output version information and exit"
 }
