@@ -235,7 +235,7 @@ grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
 cp -a $HOMEDIR $JAIL/home/
 
 # Lock root on the chroot
-chroot --userspec=root:root $JAIL
+chroot --userspec=root:root $JAIL `passwd -l root && exit`
 
 # Cleaning...
 cleaner
