@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 PRODUCTNAME="ChrootJail"
-VERSION="1.0.5"
+VERSION="1.0.6"
 RELEASE="01 Apr 2014"
 COPYRIGHT="(c) Copyright by Alex Yegerev (alexriz)"
 #
@@ -233,6 +233,11 @@ grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
 
 # Copy User home dir to chroot
 cp -a $HOMEDIR $JAIL/home/
+
+# Lock root on the chroot
+chroot --userspec=root:root $JAIL
+passwd -l root
+exit
 
 # Cleaning...
 cleaner
