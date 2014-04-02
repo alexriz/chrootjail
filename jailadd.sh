@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 PRODUCTNAME="ChrootJail"
-VERSION="1.0.1"
+VERSION="1.0.2"
 RELEASE="01 Apr 2014"
 COPYRIGHT="(c) Copyright by Alex Yegerev (alexriz)"
 #
@@ -207,21 +207,27 @@ pacstrap $TMPDIR $APPS
 [ -r $JAIL/dev/zero ]    || mknod -m 666 $JAIL/dev/zero    c 1 5
 [ -r $JAIL/dev/tty ]     || mknod -m 666 $JAIL/dev/tty     c 5 0 
 
-# Creating user
-useradd -m -d $HOMEDIR -g $USERGROUP -s /bin/bash $USERNAME
+# Creating user/group
+if [[ -n grep /etc/group -e "^$USERGROUP:" ]]; then
+	echo "Creating new group: $USERGROUP"
+	groupadd $USERGROUP
+fi
 
-# Set password for chroot user
-passwd $USERNAME
+if [[ -n grep /etc/passwd -e "^$USERNAME:" ]]; then
+	echo "Creating new user: $USERNAME"
+	useradd -m -d $HOMEDIR -g $USERGROUP -s /bin/bash $USERNAME
+	# Set password for chroot user
+	passwd $USERNAME
+fi
 
 # Add users to $JAIL/etc/passwd
 #
 # check if file exists (ie we are not called for the first time)
 # if yes skip root's entry and do not overwrite the file
-grep /etc/passwd -e "^root" > $JAIL/etc/passwd
-grep /etc/group -e "^root" > $JAIL/etc/group
-grep /etc/shadow -e "^root" > $JAIL/etc/shadow
 grep /etc/passwd -e "^$USERNAME:" >> $JAIL/etc/passwd
-grep /etc/group -e "^$USERNAME:" >> $JAIL/etc/group
+CURRENTGROUP=id -gn $USERNAME;
+CURRENTGID=id -g $USERNAME;
+"$CURRENTGROUP:x:$CURRENTGID:$USERNAME" >> $JAIL/etc/group
 grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
 
 # Copy User home dir to chroot
