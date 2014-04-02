@@ -227,7 +227,6 @@ fi
 grep /etc/passwd -e "^$USERNAME:" >> $JAIL/etc/passwd
 CURRENTGROUP=`id -gn $USERNAME`;
 CURRENTGID=`id -g $USERNAME`;
-echo "$CURRENTGROUP:x:$CURRENTGID:$USERNAME"
 echo "$CURRENTGROUP:x:$CURRENTGID:$USERNAME" >> $JAIL/etc/group
 grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
 
