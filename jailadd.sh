@@ -225,9 +225,9 @@ fi
 # check if file exists (ie we are not called for the first time)
 # if yes skip root's entry and do not overwrite the file
 grep /etc/passwd -e "^$USERNAME:" >> $JAIL/etc/passwd
-CURRENTGROUP=id -gn $USERNAME;
-CURRENTGID=id -g $USERNAME;
-"$CURRENTGROUP:x:$CURRENTGID:$USERNAME" >> $JAIL/etc/group
+CURRENTGROUP="id -gn $USERNAME";
+CURRENTGID="id -g $USERNAME";
+echo "$CURRENTGROUP:x:$CURRENTGID:$USERNAME" >> $JAIL/etc/group
 grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
 
 # Copy User home dir to chroot
