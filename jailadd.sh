@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 PRODUCTNAME="ChrootJail"
-VERSION="1.0.2"
+VERSION="1.0.5"
 RELEASE="01 Apr 2014"
 COPYRIGHT="(c) Copyright by Alex Yegerev (alexriz)"
 #
@@ -208,12 +208,12 @@ pacstrap $TMPDIR $APPS
 [ -r $JAIL/dev/tty ]     || mknod -m 666 $JAIL/dev/tty     c 5 0 
 
 # Creating user/group
-if [[ $(grep /etc/group -e "^$USERGROUP:") ]]; then
+if [[ -z `grep /etc/group -e "^$USERGROUP:"` ]]; then
 	echo "Creating new group: $USERGROUP"
 	groupadd $USERGROUP
 fi
 
-if [[ $(grep /etc/passwd -e "^$USERNAME:") ]]; then
+if [[ -z `grep /etc/passwd -e "^$USERNAME:"` ]]; then
 	echo "Creating new user: $USERNAME"
 	useradd -m -d $HOMEDIR -g $USERGROUP -s /bin/bash $USERNAME
 	# Set password for chroot user
@@ -225,8 +225,9 @@ fi
 # check if file exists (ie we are not called for the first time)
 # if yes skip root's entry and do not overwrite the file
 grep /etc/passwd -e "^$USERNAME:" >> $JAIL/etc/passwd
-CURRENTGROUP="id -gn $USERNAME";
-CURRENTGID="id -g $USERNAME";
+CURRENTGROUP=`id -gn $USERNAME`;
+CURRENTGID=`id -g $USERNAME`;
+echo "$CURRENTGROUP:x:$CURRENTGID:$USERNAME"
 echo "$CURRENTGROUP:x:$CURRENTGID:$USERNAME" >> $JAIL/etc/group
 grep /etc/shadow -e "^$USERNAME:" >> $JAIL/etc/shadow
 
