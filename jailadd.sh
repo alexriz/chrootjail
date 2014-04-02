@@ -208,12 +208,12 @@ pacstrap $TMPDIR $APPS
 [ -r $JAIL/dev/tty ]     || mknod -m 666 $JAIL/dev/tty     c 5 0 
 
 # Creating user/group
-if [[ -n grep /etc/group -e "^$USERGROUP:" ]]; then
+if [[ $(grep /etc/group -e "^$USERGROUP:") ]]; then
 	echo "Creating new group: $USERGROUP"
 	groupadd $USERGROUP
 fi
 
-if [[ -n grep /etc/passwd -e "^$USERNAME:" ]]; then
+if [[ $(grep /etc/passwd -e "^$USERNAME:") ]]; then
 	echo "Creating new user: $USERNAME"
 	useradd -m -d $HOMEDIR -g $USERGROUP -s /bin/bash $USERNAME
 	# Set password for chroot user
