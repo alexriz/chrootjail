@@ -11,3 +11,9 @@ chrootjail for ArchLinux
 	-d    Set home directory
 	--help      display this help and exit
 	--version   output version information and exit
+
+How to install
+==========
+git clone git@github.com:alexriz/chrootjail.git
+cd chrootjail
+sudo make install
