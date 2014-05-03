@@ -14,6 +14,6 @@ chrootjail for ArchLinux
 
 How to install
 ==========
-git clone git@github.com:alexriz/chrootjail.git
-cd chrootjail
-sudo make install
+	git clone git@github.com:alexriz/chrootjail.git
+	cd chrootjail
+	sudo make install
