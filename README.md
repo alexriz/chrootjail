@@ -17,3 +17,7 @@ How to install
 	git clone git@github.com:alexriz/chrootjail.git
 	cd chrootjail
 	sudo make install
+
+Example
+==========
+	sudo jailadd.sh -u testuser -g jail -j /srv/jail/testuser -s "nano mc" -d /home/testuser
