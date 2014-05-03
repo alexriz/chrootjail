@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 PRODUCTNAME="ChrootJail"
-VERSION="1.0.10"
+VERSION="1.0.11"
 RELEASE="01 Apr 2014"
 COPYRIGHT="(c) Copyright by Alex Yegerev (alexriz)"
 #
