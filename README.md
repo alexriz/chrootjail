@@ -1,7 +1,7 @@
-chrootjail
+ChrootJail
 ==========
 
-chrootjail for ArchLinux
+ChrootJail for ArchLinux
 
 	Usage: $0 [OPTION]
 	-u    Set user name
